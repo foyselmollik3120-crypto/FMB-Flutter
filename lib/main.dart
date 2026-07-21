@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'services/auth_service.dart';
+import 'screens/home_screen.dart';
 
 void main() {
   runApp(const FmbApp());
@@ -11,7 +12,7 @@ class FmbApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'FMB Auth',
+      title: 'FMB App',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
@@ -62,6 +63,14 @@ class _AuthScreenState extends State<AuthScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(response['message'] ?? 'রিকোয়েস্ট সম্পন্ন হয়েছে')),
       );
+
+      // লগইন বা রেজিস্টার সফল হলে ড্যাশবোর্ডে পাঠাবে
+      if (response['success'] == true) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const HomeScreen()),
+        );
+      }
     }
   }
 
@@ -74,7 +83,7 @@ class _AuthScreenState extends State<AuthScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.lock_outline, size: 80, color: Colors.deepPurple),
+              const Icon(Icons.lock_outline, size: 80, color: Colors.deepPurple),
               const SizedBox(height: 16),
               Text(
                 isLogin ? 'FMB অ্যাকাউন্টে লগইন করুন' : 'নতুন অ্যাকাউন্ট তৈরি করুন',
