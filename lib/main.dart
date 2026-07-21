@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
-import 'app_config.dart';
+import 'services/auth_service.dart';
 
 void main() {
   runApp(const FmbApp());
@@ -12,103 +11,118 @@ class FmbApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'FMB App',
+      title: 'FMB Auth',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
       ),
-      home: const MainHomeScreen(),
+      home: const AuthScreen(),
     );
   }
 }
 
-class MainHomeScreen extends StatefulWidget {
-  const MainHomeScreen({super.key});
+class AuthScreen extends StatefulWidget {
+  const AuthScreen({super.key});
 
   @override
-  State<MainHomeScreen> createState() => _MainHomeScreenState();
+  State<AuthScreen> createState() => _AuthScreenState();
 }
 
-class _MainHomeScreenState extends State<MainHomeScreen> {
-  String _apiResponse = "Testing backend connection...";
-  bool _isLoading = false;
+class _AuthScreenState extends State<AuthScreen> {
+  bool isLogin = true;
+  bool isLoading = false;
 
-  @override
-  void initState() {
-    super.initState();
-    _checkBackendStatus();
-  }
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
 
-  Future<void> _checkBackendStatus() async {
-    setState(() {
-      _isLoading = true;
-    });
+  void _submitForm() async {
+    final email = _emailController.text.trim();
+    final password = _passwordController.text.trim();
 
-    try {
-      final response = await http.get(Uri.parse(AppConfig.baseUrl));
-      if (response.statusCode == 200) {
-        setState(() {
-          _apiResponse = "Success! Server Response: ${response.body}";
-        });
-      } else {
-        setState(() {
-          _apiResponse = "Server connected with status code: ${response.statusCode}";
-        });
-      }
-    } catch (e) {
-      setState(() {
-        _apiResponse = "Connection failed: $e";
-      });
-    } finally {
-      setState(() {
-        _isLoading = false;
-      });
+    if (email.isEmpty || password.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('ইমেইল এবং পাসওয়ার্ড দিন')),
+      );
+      return;
+    }
+
+    setState(() => isLoading = true);
+
+    Map<String, dynamic> response;
+    if (isLogin) {
+      response = await AuthService.login(email, password);
+    } else {
+      response = await AuthService.register(email, password);
+    }
+
+    setState(() => isLoading = false);
+
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(response['message'] ?? 'রিকোয়েস্ট সম্পন্ন হয়েছে')),
+      );
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('FMB Dashboard', style: TextStyle(fontWeight: FontWeight.bold)),
-        elevation: 2,
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Card(
-              color: Colors.deepPurple.shade50,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-              child: Padding(
-                padding: const EdgeInsets.all(20.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Backend Server Status',
-                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.deepPurple),
-                    ),
-                    const SizedBox(height: 10),
-                    _isLoading
-                        ? const CircularProgressIndicator()
-                        : Text(
-                            _apiResponse,
-                            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
-                          ),
-                  ],
+      body: Center(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(24.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.lock_outline, size: 80, color: Colors.deepPurple),
+              const SizedBox(height: 16),
+              Text(
+                isLogin ? 'FMB অ্যাকাউন্টে লগইন করুন' : 'নতুন অ্যাকাউন্ট তৈরি করুন',
+                style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 32),
+              TextField(
+                controller: _emailController,
+                decoration: InputDecoration(
+                  labelText: 'ইমেইল',
+                  prefixIcon: const Icon(Icons.email_outlined),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                 ),
               ),
-            ),
-            const SizedBox(height: 20),
-            ElevatedButton.icon(
-              onPressed: _checkBackendStatus,
-              icon: const Icon(Icons.refresh),
-              label: const Text('Test Connection Again'),
-            ),
-          ],
+              const SizedBox(height: 16),
+              TextField(
+                controller: _passwordController,
+                obscureText: true,
+                decoration: InputDecoration(
+                  labelText: 'পাসওয়ার্ড',
+                  prefixIcon: const Icon(Icons.lock_clock_outlined),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+              ),
+              const SizedBox(height: 24),
+              SizedBox(
+                width: double.infinity,
+                height: 50,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.deepPurple,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                  onPressed: isLoading ? null : _submitForm,
+                  child: isLoading
+                      ? const CircularProgressIndicator(color: Colors.white)
+                      : Text(isLogin ? 'লগইন' : 'রেজিস্টার', style: const TextStyle(fontSize: 16)),
+                ),
+              ),
+              TextButton(
+                onPressed: () => setState(() => isLogin = !isLogin),
+                child: Text(
+                  isLogin ? 'অ্যাকাউন্ট নেই? সাইনআপ করুন' : 'অ্যাকাউন্ট আছে? লগইন করুন',
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
