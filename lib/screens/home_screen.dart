@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'music_feed_screen.dart'; // মিউজিক স্ক্রিনটি কানেক্ট করা হলো
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -74,10 +75,22 @@ class HomeScreen extends StatelessWidget {
               crossAxisSpacing: 12,
               mainAxisSpacing: 12,
               children: [
-                _buildFeatureCard(Icons.audiotrack, 'মিউজিক ফিড', Colors.orange),
-                _buildFeatureCard(Icons.video_library, 'ভিডিও কন্টেন্ট', Colors.blue),
-                _buildFeatureCard(Icons.analytics, 'অ্যানালিটিক্স', Colors.green),
-                _buildFeatureCard(Icons.settings, 'সেটিংস', Colors.red),
+                // মিউজিক ফিড কার্ড (যেখানে চাপ দিলে মিউজিক পেজে নিয়ে যাবে)
+                _buildFeatureCard(
+                  context,
+                  Icons.audiotrack,
+                  'মিউজিক ফিড',
+                  Colors.orange,
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => const MusicFeedScreen()),
+                    );
+                  },
+                ),
+                _buildFeatureCard(context, Icons.video_library, 'ভিডিও কন্টেন্ট', Colors.blue),
+                _buildFeatureCard(context, Icons.analytics, 'অ্যানালিটিক্স', Colors.green),
+                _buildFeatureCard(context, Icons.settings, 'সেটিংস', Colors.red),
               ],
             ),
           ],
@@ -86,12 +99,18 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildFeatureCard(IconData icon, String title, Color color) {
+  Widget _buildFeatureCard(
+    BuildContext context,
+    IconData icon,
+    String title,
+    Color color, {
+    VoidCallback? onTap,
+  }) {
     return Card(
       elevation: 2,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: InkWell(
-        onTap: () {},
+        onTap: onTap ?? () {},
         borderRadius: BorderRadius.circular(12),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -109,4 +128,3 @@ class HomeScreen extends StatelessWidget {
     );
   }
 }
-
